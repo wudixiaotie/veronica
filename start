@@ -7,16 +7,19 @@ rebar3 compile
 
 case "$1" in
     "")
-	INDEX="1"
+	      NODE_NAME="veronica1@${IP}"
+        CMD_PING="net_adm:ping('${NODE_NAME}')"
         ;;
     *)
-	INDEX=$1
-	;;
+	      NODE_NAME="veronica$1@${IP}"
+        CMD_PING="net_adm:ping('veronica1@${IP}')"
+	      ;;
 esac
+
 if [ $? -eq 0 ]; then
     mkdir -p data
     rm -rf data/test.db
-    erl -name "veronica${INDEX}@${IP}" -setcookie veronica -pa _build/default/lib/*/ebin/ -eval 'application:ensure_all_started(veronica).'
+    erl -name ${NODE_NAME} -setcookie veronica -pa _build/default/lib/*/ebin/ -eval "${CMD_PING}" -eval 'application:ensure_all_started(veronica).'
 else
     printf "${RED}====> Compile error${NC}"
 fi
