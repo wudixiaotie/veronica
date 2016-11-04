@@ -4,10 +4,19 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 rebar3 compile
+
+case "$1" in
+    "")
+	INDEX="1"
+        ;;
+    *)
+	INDEX=$1
+	;;
+esac
 if [ $? -eq 0 ]; then
     mkdir -p data
     rm -rf data/test.db
-    erl -name "veronica@${IP}" -setcookie erlang -pa _build/default/lib/*/ebin/ -eval 'application:ensure_all_started(veronica).'
+    erl -name "veronica${INDEX}@${IP}" -setcookie veronica -pa _build/default/lib/*/ebin/ -eval 'application:ensure_all_started(veronica).'
 else
     printf "${RED}====> Compile error${NC}"
 fi

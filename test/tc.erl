@@ -81,7 +81,7 @@ ct(M, F, A, N) ->
     io:format("Minimum: ~p(μs)\t~p(s)~n", [Min, Min / 1000000]),
     io:format("Sum: ~p(μs)\t~p(s)~n", [Sum, Sum / 1000000]),
     io:format("Average: ~p(μs)\t~p(s)~n", [Aver, Aver / 1000000]),
-    io:format("Greater: ~p~nLess: ~p~n", [Greater, Less]),
+    io:format("Greater: ~pLower: ~p~n", [Greater, Less]),
     io:format("=====================~n").
 
 
