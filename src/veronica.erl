@@ -2,7 +2,11 @@
 
 -export ([error/1, open/0, init/0, get/2, put/3, build_ring/0, locate/2]).
 
--record(ring, {size, interval, nodes, body}).
+-record(ring, {size,
+               plength, %% partition length
+               nodes,
+               plan,
+               body}).
 
 error(X) ->
     lager:error("[text] ~p~n", [X]).
@@ -30,33 +34,46 @@ init() ->
 build_ring() ->
     Size = 64,
     Max = math:pow(2, 256),
-    Interval = Max / Size,
+    PLength = erlang:trunc(Max / Size),
     Nodes = [erlang:node()|erlang:nodes()],
-    Ring0 = #ring{size = Size, interval = Interval, nodes = Nodes},
-    {ok, Body} = build_ring_body(Ring0),
-    {ok, Ring0#ring{body = Body}}.
+    SortedNodes = lists:sort(Nodes),
+    Ring0 = #ring{size = Size,
+                  plength = PLength,
+                  nodes = SortedNodes},
+    %% {ok, Ring1} = build_ring_plan(Ring0),
+    {ok, Ring} = build_ring_body(Ring0),
+    {ok, Ring}.
 
-build_ring_body(Ring0) ->
-    #ring{size = Size, interval = Interval, nodes = Nodes} = Ring0,
-    N = erlang:trunc(Size / erlang:length(Nodes)),
-    {ok, Body} = build_ring_body(N, Nodes, Interval, []),
-    {ok, Body}.
+build_ring_body(#ring{size = Size,
+                      plength = PLength,
+                      nodes = Nodes} = Ring) ->
+    NodesLength = erlang:length(Nodes),
+    {ok, Body} = build_ring_body(Size, NodesLength, Nodes, PLength, 0, 0, []),
+    {ok, Ring#ring{body = Body}}.
 
-build_ring_body(_, [], _, Body) ->
-    {ok, Body};
-build_ring_body(N, [Node|T], Interval, Body0) ->
-    {ok, Body1} = do_build_ring_body(N, Node, Interval, Body0),
-    build_ring_body(N, T, Interval, Body1).
+build_ring_body(Size, _, _, _, Size, _, Body) ->
+    {ok, lists:reverse(Body)};
+build_ring_body(Size, NodesLength, Nodes, PLength, N, I0, Body0 = [{PHead0, _}|_]) ->
+    I =
+        case I0 of
+            NodesLength ->
+                1;
+            _ ->
+                I0 + 1
+        end,
+    Node = lists:nth(I, Nodes),
+    lager:info("fuck I:~p, Node:~p", [I, Node]),
+    Body = [{PHead0 + PLength, Node}|Body0],
+    build_ring_body(Size, NodesLength, Nodes, PLength, N + 1, I, Body);
+build_ring_body(Size, NodesLength, Nodes, PLength, _, _, []) ->
+    Node = lists:nth(1, Nodes),
+    Body = [{0, Node}],
+    build_ring_body(Size, NodesLength, Nodes, PLength, 1, 1, Body).
 
-do_build_ring_body(-1, _, _, Body) ->
-    {ok, Body};
-do_build_ring_body(N, Node, Interval, Body0) ->
-    Body1 = [{N*Interval, Node}|Body0],
-    do_build_ring_body(N - 1, Node, Interval, Body1).
 
 locate(Ring, X) ->
     Hash = crypto:bytes_to_integer(crypto:hash(sha256, X)),
-    #ring{interval = Interval, body = RingBody} = Ring,
-    I = erlang:trunc(Hash / Interval),
+    #ring{plength = PLength, body = RingBody} = Ring,
+    I = erlang:trunc(Hash / PLength),
     {V, _} = lists:nth(I + 1, RingBody),
     V.
