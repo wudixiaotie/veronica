@@ -1,7 +1,8 @@
 %% ===================================================================
-%% Author xiaotie
-%% 2015-09-26
-%% client factory supervisor
+%% Author Tie Xiao
+%% Email wudixiaotie@gmail.com
+%% 2016-11-24
+%% Veronica worker supervisor
 %% ===================================================================
 
 -module(veronica_worker_sup).
@@ -9,7 +10,7 @@
 -behaviour(supervisor).
 
 %% API
--export([start_link/1]).
+-export([start_link/0]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -26,8 +27,8 @@
 %% API functions
 %% ===================================================================
 
-start_link(Name) ->
-    supervisor:start_link({local, Name}, ?MODULE, []).
+start_link() ->
+    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 
 

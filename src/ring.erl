@@ -1,3 +1,10 @@
+%% ===================================================================
+%% Author Tie Xiao
+%% Email wudixiaotie@gmail.com
+%% 2016-11-24
+%% Ring
+%% ===================================================================
+
 -module(ring).
 
 %% API
@@ -32,6 +39,8 @@ init() ->
                    public,
                    named_table,
                    {read_concurrency, true}]),
+    {ok, Ring} = build(),
+    store(Ring),
     ok.
 
 build() ->

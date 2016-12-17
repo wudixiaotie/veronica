@@ -1,3 +1,10 @@
+%% ===================================================================
+%% Author Tie Xiao
+%% Email wudixiaotie@gmail.com
+%% 2016-11-24
+%% Veronica API
+%% ===================================================================
+
 -module(veronica).
 
 %% API
@@ -17,7 +24,7 @@
 init() ->
     ok = ldb:init(),
     ok = ring:init(),
-    ok = init_local_workers(),
+    %%ok = init_local_workers(),
     ok.
 
 error(X) ->
