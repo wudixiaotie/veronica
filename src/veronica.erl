@@ -9,7 +9,8 @@
 
 %% API
 -export([
-         error/1
+         get_worker/1,
+         get_ring/0
         ]).
 
 -include("veronica.hrl").
@@ -20,9 +21,11 @@
 %% API functions
 %% ===================================================================
 
-error(X) ->
-    lager:error("[text] ~p~n", [X]).
+get_worker(Key) ->
+    chash:get_worker(Key).
 
+get_ring() ->
+    ring:get().
 
 
 %%====================================================================

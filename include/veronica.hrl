@@ -5,4 +5,4 @@
 %% Veronica Header file
 %% ===================================================================
 
--define(WORKER_NAME(PIndex), {worker, PIndex}).
+-define(WORKER_NAME(PIndex), {veronica_worker, PIndex}).

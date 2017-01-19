@@ -25,6 +25,8 @@
           partition_index
          }).
 
+-include("veronica.hrl").
+
 
 %% ===================================================================
 %% API functions
@@ -34,7 +36,7 @@ start(PIndex) ->
     supervisor:start_child(veronica_worker_sup, [PIndex]).
 
 start_link(PIndex) ->
-    gen_msg:start_link({global, {veronica_worker, PIndex}}, ?MODULE, [PIndex], []).
+    gen_msg:start_link({global, ?WORKER_NAME(PIndex)}, ?MODULE, [PIndex], []).
 
 
 %%====================================================================
