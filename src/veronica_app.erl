@@ -18,7 +18,6 @@
 
 start(_StartType, _StartArgs) ->
     {ok, SupPid} = veronica_sup:start_link(),
-    ok = ldb:init(),
     ok = ring:init(),
     ok = init_local_workers(),
     {ok, SupPid}.
