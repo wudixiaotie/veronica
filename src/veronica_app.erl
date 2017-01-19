@@ -17,8 +17,11 @@
 %%====================================================================
 
 start(_StartType, _StartArgs) ->
-    ok = veronica:init(),
-    veronica_sup:start_link().
+    {ok, SupPid} = veronica_sup:start_link(),
+    ok = ldb:init(),
+    ok = ring:init(),
+    ok = init_local_workers(),
+    {ok, SupPid}.
 
 %%--------------------------------------------------------------------
 stop(_State) ->
@@ -27,3 +30,16 @@ stop(_State) ->
 %%====================================================================
 %% Internal functions
 %%====================================================================
+
+init_local_workers() ->
+    lager:info("[veronica][worker] Initializing"),
+    {ok, Ring} = ring:get(),
+    LPs = ring:local_partitions(Ring),
+    init_local_workers(LPs).
+
+init_local_workers([LP|T]) ->
+    PIndex = ring:partition_index(LP),
+    veronica_worker:start(PIndex),
+    init_local_workers(T);
+init_local_workers([]) ->
+    ok.

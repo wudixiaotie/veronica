@@ -21,8 +21,9 @@
 %% ===================================================================
 
 init() ->
-    {ok, DBHandle} = erocksdb:open("data/test.db",
-                             [{create_if_missing, true}], []),
+    DBPath = application:get_env(veronica, db_path, "data/"),
+    {ok, DBHandle} = erocksdb:open(DBPath ++ "main",
+                                   [{create_if_missing, true}], []),
     ets:new(ldb, [set,
                   public,
                   named_table,

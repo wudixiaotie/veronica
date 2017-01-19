@@ -16,6 +16,7 @@
          interval/1,
          partitions/1,
          partition_index/1,
+         lower_bound/1,
          local_partitions/1
         ]).
 
@@ -35,6 +36,7 @@
 %% ===================================================================
 
 init() ->
+    lager:info("[veronica][ring] Initializing"),
     ets:new(ring, [set,
                    public,
                    named_table,
@@ -81,8 +83,11 @@ partitions(#ring{partitions = Partitions}) ->
 partition_index(#partition{index = Index}) ->
     Index.
 
+lower_bound(#partition{lower_bound = LowerBound}) ->
+    LowerBound.
+
 local_partitions(#ring{partitions = Partitions}) ->
-    local_partitions(self(), Partitions, []).
+    local_partitions(node(), Partitions, []).
 
 
 
