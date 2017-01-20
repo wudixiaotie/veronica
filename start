@@ -18,7 +18,7 @@ esac
 
 if [ $? -eq 0 ]; then
     mkdir -p data
-    rm -rf data/test.db
+    rm -rf data/main
     erl -name ${NODE_NAME} -setcookie veronica -pa _build/default/lib/*/ebin/ -eval "${CMD_PING}" -eval 'application:ensure_all_started(veronica).'
 else
     printf "${RED}====> Compile error${NC}"
