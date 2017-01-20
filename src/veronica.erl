@@ -7,10 +7,11 @@
 
 -module(veronica).
 
-%% API
+%% APIs
 -export([
          get_worker/1,
-         get_ring/0
+         get_ring/0,
+         join_cluster/1
         ]).
 
 -include("veronica.hrl").
@@ -26,6 +27,9 @@ get_worker(Key) ->
 
 get_ring() ->
     ring:get().
+
+join_cluster(Node) ->
+    veronica_cluster:join(Node).
 
 
 %%====================================================================

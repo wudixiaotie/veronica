@@ -3,18 +3,11 @@ IP=$(ifconfig | grep --color=no -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep --
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
+RANDOM_STRING=$(date | md5 | head -c 10)
 rebar3 compile
 
-case "$1" in
-    "")
-        NODE_NAME="veronica1@${IP}"
-        CMD_PING="net_adm:ping('${NODE_NAME}')"
-        ;;
-    *)
-        NODE_NAME="veronica$1@${IP}"
-        CMD_PING="net_adm:ping('veronica1@${IP}')"
-        ;;
-esac
+NODE_NAME="veronica_${RANDOM_STRING}@${IP}"
+CMD_PING="net_adm:ping('${NODE_NAME}')"
 
 if [ $? -eq 0 ]; then
     mkdir -p data

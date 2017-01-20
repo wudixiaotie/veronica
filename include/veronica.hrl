@@ -5,4 +5,5 @@
 %% Veronica Header file
 %% ===================================================================
 
--define(WORKER_NAME(PIndex), {veronica_worker, PIndex}).
+-define(WORKER_NAME(PIndex),
+        erlang:list_to_atom("veronica_worker_" ++ erlang:integer_to_list(PIndex))).

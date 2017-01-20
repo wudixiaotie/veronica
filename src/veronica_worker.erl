@@ -36,7 +36,7 @@ start(PIndex) ->
     supervisor:start_child(veronica_worker_sup, [PIndex]).
 
 start_link(PIndex) ->
-    gen_msg:start_link({global, ?WORKER_NAME(PIndex)}, ?MODULE, [PIndex], []).
+    gen_msg:start_link({local, ?WORKER_NAME(PIndex)}, ?MODULE, [PIndex], []).
 
 
 %%====================================================================

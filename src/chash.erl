@@ -7,7 +7,7 @@
 
 -module(chash).
 
-%% API
+%% APIs
 -export([
          get_worker/1
         ]).
