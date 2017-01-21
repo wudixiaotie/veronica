@@ -1,5 +1,5 @@
 %% ===================================================================
-%% Author Tie Xiao
+%% Author Kevin Xiao
 %% Email wudixiaotie@gmail.com
 %% 2016-11-24
 %% Gen Message
@@ -19,12 +19,23 @@
 
 
 %% ===================================================================
-%% APIs
+%% behaviour callbacks
 %% ===================================================================
 
--callback init(Args :: term()) -> {ok, State :: term()} | {ok, State :: term(), timeout() | hibernate}.
--callback handle_msg(Msg :: term(), State :: term()) -> {ok, NewState :: term()} | {ok, State :: term(), timeout() | hibernate}.
+-callback init(Args :: term()) ->
+    {ok, State :: term()} |
+    {ok, State :: term(), timeout() | hibernate} |
+    {stop, Reason :: term(), State :: term()}.
+-callback handle_msg(Msg :: term(), State :: term()) ->
+    {ok, NewState :: term()} |
+    {ok, State :: term(), timeout() | hibernate}.
 -callback terminate(Reason :: term(), State :: term()) -> ok.
+
+
+
+%% ===================================================================
+%% APIs
+%% ===================================================================
 
 start_link(Module, Args, Opts) ->
     proc_lib:start_link(?MODULE, init, [self(), Module, Args], ?TIMEOUT, Opts).
@@ -68,13 +79,14 @@ do_init(Parent, Module, Args) ->
 
     case Module:init(Args) of
         {ok, State} ->
-            Timeout = infinity;
+            ok = proc_lib:init_ack(Parent, {ok, self()}),
+            loop(Parent, Debug, Module, State, infinity);
         {ok, State, Timeout} ->
-            ok
-    end,
-
-    ok = proc_lib:init_ack(Parent, {ok, self()}),
-    loop(Parent, Debug, Module, State, Timeout).
+            ok = proc_lib:init_ack(Parent, {ok, self()}),
+            loop(Parent, Debug, Module, State, Timeout);
+        {stop, Reason, State} ->
+            terminate(Reason, Module, State)
+    end.
 
 
 loop(Parent, Debug, Module, State, Timeout) ->

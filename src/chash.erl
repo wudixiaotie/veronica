@@ -1,5 +1,5 @@
 %% ===================================================================
-%% Author Tie Xiao
+%% Author Kevin Xiao
 %% Email wudixiaotie@gmail.com
 %% 2016-11-24
 %% Consistent Hash
@@ -29,4 +29,4 @@ get_worker(Key) ->
     Partitions = ring:partitions(Ring),
     Partition = lists:nth(I, Partitions),
     PIndex = ring:partition_index(Partition),
-    {ok, ?WORKER_NAME(PIndex)}.
+    {ok, ?VERONICA_WORKER(PIndex)}.

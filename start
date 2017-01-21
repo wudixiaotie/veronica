@@ -7,12 +7,11 @@ RANDOM_STRING=$(date | md5 | head -c 10)
 rebar3 compile
 
 NODE_NAME="veronica_${RANDOM_STRING}@${IP}"
-CMD_PING="net_adm:ping('${NODE_NAME}')"
 
 if [ $? -eq 0 ]; then
     mkdir -p data
     rm -rf data/main
-    erl -name ${NODE_NAME} -setcookie veronica -pa _build/default/lib/*/ebin/ -eval "${CMD_PING}" -eval 'application:ensure_all_started(veronica).'
+    erl -name ${NODE_NAME} -setcookie veronica -pa _build/default/lib/*/ebin/ -eval -eval 'application:ensure_all_started(veronica).'
 else
     printf "${RED}====> Compile error${NC}"
 fi

@@ -1,5 +1,5 @@
 %% ===================================================================
-%% Author Tie Xiao
+%% Author Kevin Xiao
 %% Email wudixiaotie@gmail.com
 %% 2016-11-24
 %% Veronica API

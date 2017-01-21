@@ -1,5 +1,5 @@
 %% ===================================================================
-%% Author Tie Xiao
+%% Author Kevin Xiao
 %% Email wudixiaotie@gmail.com
 %% 2016-11-24
 %% Ring
@@ -20,14 +20,7 @@
          local_partitions/1
         ]).
 
--record(ring, {size,
-               interval, %% partition interval
-               members,
-               partitions}).
-
--record(partition, {index,
-                    lower_bound,
-                    member}).
+-include("veronica.hrl").
 
 
 
@@ -49,8 +42,7 @@ build() ->
     Size = 64,
     Max = math:pow(2, 256),
     Interval = erlang:trunc(Max / Size),
-    Nodes = [erlang:node()|erlang:nodes()],
-    Members = lists:sort(Nodes),
+    Members = veronica_cluster:members(),
     Ring0 = #ring{size = Size,
                   interval = Interval,
                   members = Members},

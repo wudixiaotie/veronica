@@ -1,5 +1,5 @@
 %% ===================================================================
-%% Author Tie Xiao
+%% Author Kevin Xiao
 %% Email wudixiaotie@gmail.com
 %% 2016-11-24
 %% Veronica top level supervisor.
@@ -37,7 +37,8 @@ start_link() ->
 init([]) ->
     {ok, { {one_for_all, 0, 1},
            [?CHILD(ldb, worker),
-            ?CHILD(veronica_worker_sup, supervisor)]} }.
+            ?CHILD(veronica_worker_sup, supervisor),
+            ?CHILD(veronica_cluster, worker)]} }.
 
 %%====================================================================
 %% Internal functions
