@@ -37,7 +37,11 @@ init_local_workers(Module, Args) ->
     end.
 
 get_worker(Key) ->
-    chash:get_worker(Key).
+    {ok, Partition} = chash:hash(Key),
+    Member = ring:partition_member(Partition),
+    Index = ring:partition_index(Partition),
+    Worker = {?VERONICA_WORKER(Index), Member},
+    {ok, Worker}.
 
 get_ring() ->
     ring:get().

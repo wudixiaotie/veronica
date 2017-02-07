@@ -16,6 +16,7 @@
          interval/1,
          partitions/1,
          partition_index/1,
+         partition_member/1,
          lower_bound/1,
          local_partitions/1
         ]).
@@ -78,6 +79,9 @@ partitions(#ring{partitions = Partitions}) ->
 
 partition_index(#partition{index = Index}) ->
     Index.
+
+partition_member(#partition{member = Member}) ->
+    Member.
 
 lower_bound(#partition{lower_bound = LowerBound}) ->
     LowerBound.

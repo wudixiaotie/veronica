@@ -9,10 +9,8 @@
 
 %% APIs
 -export([
-         get_worker/1
+         hash/1
         ]).
-
--include("veronica.hrl").
 
 
 
@@ -20,7 +18,7 @@
 %% API functions
 %% ===================================================================
 
-get_worker(Key) ->
+hash(Key) ->
     Hash = crypto:bytes_to_integer(
              crypto:hash(sha256, Key)),
     {ok, Ring} = ring:get(),
@@ -28,5 +26,4 @@ get_worker(Key) ->
     I = erlang:trunc(Hash / Interval) + 1,
     Partitions = ring:partitions(Ring),
     Partition = lists:nth(I, Partitions),
-    PIndex = ring:partition_index(Partition),
-    {ok, ?VERONICA_WORKER(PIndex)}.
+    {ok, Partition}.

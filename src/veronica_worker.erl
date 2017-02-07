@@ -43,6 +43,7 @@
 -callback finish_transfer(State :: term()) -> ok.
 -callback receive_transfers(Data :: term(), State :: term()) -> {ok, NewState :: term()}.
 -callback terminate(Reason :: term(), State :: term()) -> ok.
+-callback handle_msg(Msg :: term(), State :: term()) -> {ok, NewState :: term()}.
 
 
 
@@ -100,10 +101,10 @@ handle_msg({finish_transfer, From, Ref},
     From ! {ack, Ref},
     {ok, State#state{cb_state = NewCbState,
                      transfers = <<>>}};
-handle_msg(Msg, State = #state{name = Name}) ->
-    lager:warning("[veronica][worker ~p] Unknow msg ~p",
-                  [Name, Msg]),
-    {ok, State}.
+handle_msg(Msg, State = #state{cb_module = CbModule,
+                               cb_state = CbState}) ->
+    {ok, NewCbState} = CbModule:handle_msg(Msg, CbState),
+    {ok, State#state{cb_state = NewCbState}}.
 
 terminate({shutdown, transfered}, #state{name = Name}) ->
     lager:info("[veronica][worker ~p] transfered",
