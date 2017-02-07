@@ -27,7 +27,7 @@
           name,
           cb_module, % callback module
           cb_state,   % callback state
-          tranfers = <<>>
+          transfers = <<>>
          }).
 
 
@@ -82,24 +82,24 @@ handle_msg({transfer, Member},
     {ok, State};
 handle_msg({receive_transfers, From, Ref, DataBin},
            State = #state{name = Name,
-                          tranfers = Tranfers}) ->
+                          transfers = Transfers}) ->
     lager:info("[veronica][worker ~p] Receiving transfer data",
                [Name]),
-    Tranfers1 = <<Tranfers/binary, DataBin/binary>>,
+    Transfers1 = <<Transfers/binary, DataBin/binary>>,
     From ! {ack, Ref},
-    {ok, State#state{tranfers = Tranfers1}};
+    {ok, State#state{transfers = Transfers1}};
 handle_msg({finish_transfer, From, Ref},
            State = #state{name = Name,
                           cb_module = CbModule,
                           cb_state = CbState,
-                          tranfers = Tranfers}) ->
+                          transfers = Transfers}) ->
     lager:info("[veronica][worker ~p] Finish transfer data",
                [Name]),
-    Data = erlang:binary_to_term(Tranfers),
+    Data = erlang:binary_to_term(Transfers),
     {ok, NewCbState} = CbModule:receive_transfers(Data, CbState),
     From ! {ack, Ref},
     {ok, State#state{cb_state = NewCbState,
-                     tranfers = <<>>}};
+                     transfers = <<>>}};
 handle_msg(Msg, State = #state{name = Name}) ->
     lager:warning("[veronica][worker ~p] Unknow msg ~p",
                   [Name, Msg]),
