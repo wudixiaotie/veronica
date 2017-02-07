@@ -10,8 +10,8 @@
 -behaviour(gen_msg).
 
 -export([
-         start/2,
-         start_link/2
+         start/3,
+         start_link/3
         ]).
 
 %% gen_msg callback functions
@@ -24,7 +24,6 @@
 -include("veronica.hrl").
 
 -record(state, {
-          partition_index,
           cb_module, % callback module
           cb_state   % callback state
          }).
@@ -38,8 +37,7 @@
 -callback init(Args :: list()) ->
     {ok, State :: term()} |
     {stop, Reason :: term(), State :: term()}.
--callback transfer(Member :: atom(), State :: term()) ->
-    ok.
+-callback transfer(Member :: atom(), State :: term()) -> ok.
 -callback terminate(Reason :: term(), State :: term()) -> ok.
 
 
@@ -48,20 +46,19 @@
 %% API functions
 %% ===================================================================
 
-start(PIndex, CbModule) ->
-    supervisor:start_child(veronica_worker_sup, [PIndex, CbModule]).
+start(PIndex, CbModule, Args) ->
+    supervisor:start_child(veronica_worker_sup, [PIndex, CbModule, Args]).
 
-start_link(PIndex, CbModule) ->
-    gen_msg:start_link({local, ?VERONICA_WORKER(PIndex)}, ?MODULE, [PIndex, CbModule], []).
+start_link(PIndex, CbModule, Args) ->
+    gen_msg:start_link({local, ?VERONICA_WORKER(PIndex)}, ?MODULE, [PIndex, CbModule, Args], []).
 
 %%====================================================================
 %% gen_msg callback functions
 %%====================================================================
 
-init([PIndex, CbModule]) ->
-    State = #state{partition_index = PIndex,
-                   cb_module = CbModule},
-    case CbModule:init() of
+init([PIndex, CbModule, Args]) ->
+    State = #state{cb_module = CbModule},
+    case CbModule:init(PIndex, Args) of
         {ok, CbState} ->
             {ok, State#state{cb_state = CbState}};
         {stop, Reason, CbState} ->

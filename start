@@ -3,7 +3,7 @@ IP=$(ifconfig | grep --color=no -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep --
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-RANDOM_STRING=$(date | md5 | head -c 10)
+RANDOM_STRING=$(dd if=/dev/urandom bs=1 count=20 2>/dev/null | md5 | head -c 10)
 rebar3 compile
 
 NODE_NAME="veronica_${RANDOM_STRING}@${IP}"

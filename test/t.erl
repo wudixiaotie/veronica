@@ -7,32 +7,19 @@
 %% tc:ct(Module, Function, ArgsList, SpawnProcessesCount).
 %% ===================================================================
 
--module(tc).
+-module(t).
 
 -export([t/4, ct/4]).
-
-
-tc(M, F, A) ->
-    {Microsecond, _} = timer:tc(M, F, A),
-    Microsecond.
-
-distribution(List, Aver) ->
-    distribution(List, Aver, 0, 0).
-distribution([H|T], Aver, Greater, Less) ->
-    case H > Aver of
-        true ->
-            distribution(T, Aver, Greater + 1, Less);
-        false ->
-            distribution(T, Aver, Greater, Less + 1)
-    end;
-distribution([], _Aver, Greater, Less) ->
-    {Greater, Less}.
 
 %% ===================================================================
 %% test: one process test N times
 %% ===================================================================
 
-t(M, F, A, N) ->
+t(M, F, A, N) when
+      is_atom(M),
+      is_atom(M),
+      is_list(A),
+      is_integer(N) ->
     {Max, Min, Sum, Aver, Greater, Less} = loop({M, F, A}, N),
     io:format("=====================~n"),
     io:format("execute [~p] times of {~p, ~p, ~p}:~n", [N, M, F, A]),
@@ -73,7 +60,11 @@ loop({_M, _F, _A}, N, _I, Max, Min, Sum, List) ->
 %% Concurrency test: N processes each test one time
 %% ===================================================================
 
-ct(M, F, A, N) ->
+ct(M, F, A, N) when
+      is_atom(M),
+      is_atom(M),
+      is_list(A),
+      is_integer(N) ->
     {Max, Min, Sum, Aver, Greater, Less} = cloop({M, F, A}, N),
     io:format("=====================~n"),
     io:format("spawn [~p] processes of {~p, ~p, ~p}:~n", [N, M, F, A]),
@@ -128,3 +119,25 @@ collector(Max, Min, Sum, N, _, List) ->
 worker({M, F, A}, CollectorPid) ->
     Microsecond = tc(M, F, A),
     CollectorPid ! {result, Microsecond}.
+
+
+
+%% ===================================================================
+%% Internal functions
+%% ===================================================================
+
+tc(M, F, A) ->
+    {Microsecond, _} = timer:tc(M, F, A),
+    Microsecond.
+
+distribution(List, Aver) ->
+    distribution(List, Aver, 0, 0).
+distribution([H|T], Aver, Greater, Less) ->
+    case H > Aver of
+        true ->
+            distribution(T, Aver, Greater + 1, Less);
+        false ->
+            distribution(T, Aver, Greater, Less + 1)
+    end;
+distribution([], _Aver, Greater, Less) ->
+    {Greater, Less}.

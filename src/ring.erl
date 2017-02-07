@@ -60,10 +60,14 @@ get() ->
         [{ring, Ring}] ->
             {ok, Ring};
         _ ->
-            {ok, RingBin} = ldb:get(<<"ring">>),
-            Ring = erlang:binary_to_term(RingBin),
-            true = ets:insert(ring, {ring, Ring}),
-            {ok, Ring}
+            case ldb:get(<<"ring">>) of
+                {ok, RingBin} ->
+                    Ring = erlang:binary_to_term(RingBin),
+                    true = ets:insert(ring, {ring, Ring}),
+                    {ok, Ring};
+                not_found ->
+                    not_found
+            end
     end.
 
 interval(#ring{interval = Interval}) ->
