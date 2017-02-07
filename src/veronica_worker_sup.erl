@@ -18,7 +18,7 @@
 %% Helper macro for declaring children of supervisor
 -define(CHILD, #{id         => veronica_worker,
                  start      => {veronica_worker, start_link, []},
-                 restart    => permanent,
+                 restart    => transient,
                  type       => worker}).
 
 

@@ -24,6 +24,7 @@
 -include("veronica.hrl").
 
 -record(state, {
+          partition_index,
           cb_module, % callback module
           cb_state   % callback state
          }).
@@ -57,7 +58,8 @@ start_link(PIndex, CbModule, Args) ->
 %%====================================================================
 
 init([PIndex, CbModule, Args]) ->
-    State = #state{cb_module = CbModule},
+    State = #state{partition_index = PIndex,
+                   cb_module = CbModule},
     case CbModule:init(PIndex, Args) of
         {ok, CbState} ->
             {ok, State#state{cb_state = CbState}};
@@ -66,19 +68,27 @@ init([PIndex, CbModule, Args]) ->
     end.
 
 handle_msg({transfer, Member},
-           State = #state{cb_module = CbModule,
+           State = #state{partition_index = PIndex,
+                          cb_module = CbModule,
                           cb_state = CbState}) ->
-    lager:info("[veronica][worker] Transferring to node: ~s",
-               [Member]),
+    lager:info("[veronica][worker ~p] Transferring to node: ~s",
+               [?VERONICA_WORKER(PIndex), Member]),
     ok = CbModule:transfer(Member, CbState),
-    {stop, transfered, State};
-handle_msg(Msg, State) ->
-    lager:warning("[veronica][worker] Unknow msg ~p", [Msg]),
+    {stop, {shutdown, transfered}, State};
+handle_msg(Msg, State = #state{partition_index = PIndex}) ->
+    lager:warning("[veronica][worker ~p] Unknow msg ~p",
+                  [?VERONICA_WORKER(PIndex), Msg]),
     {ok, State}.
 
-terminate(Reason, #state{cb_module = CbModule,
+terminate({shutdown, transfered}, #state{partition_index = PIndex}) ->
+    lager:info("[veronica][worker ~p] transfered",
+               [?VERONICA_WORKER(PIndex)]),
+    ok;
+terminate(Reason, #state{partition_index = PIndex,
+                         cb_module = CbModule,
                          cb_state = CbState}) ->
-    lager:error("[veronica][worker] Terminate ~p", [Reason]),
+    lager:error("[veronica][worker ~p] Terminate ~p",
+                [?VERONICA_WORKER(PIndex), Reason]),
     CbModule:terminate(Reason, CbState),
     ok.
 
