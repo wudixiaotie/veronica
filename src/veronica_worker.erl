@@ -24,9 +24,10 @@
 -include("veronica.hrl").
 
 -record(state, {
-          partition_index,
+          name,
           cb_module, % callback module
-          cb_state   % callback state
+          cb_state,   % callback state
+          tranfers = <<>>
          }).
 
 
@@ -38,7 +39,9 @@
 -callback init(PIndex :: integer(), Args :: list()) ->
     {ok, State :: term()} |
     {stop, Reason :: term(), State :: term()}.
--callback transfer(Member :: atom(), State :: term()) -> ok.
+-callback transfer(State :: term()) -> {ok, Data :: term()}.
+-callback finish_transfer(State :: term()) -> ok.
+-callback receive_transfers(Data :: term(), State :: term()) -> {ok, NewState :: term()}.
 -callback terminate(Reason :: term(), State :: term()) -> ok.
 
 
@@ -58,7 +61,7 @@ start_link(PIndex, CbModule, Args) ->
 %%====================================================================
 
 init([PIndex, CbModule, Args]) ->
-    State = #state{partition_index = PIndex,
+    State = #state{name = ?VERONICA_WORKER(PIndex),
                    cb_module = CbModule},
     case CbModule:init(PIndex, Args) of
         {ok, CbState} ->
@@ -68,27 +71,49 @@ init([PIndex, CbModule, Args]) ->
     end.
 
 handle_msg({transfer, Member},
-           State = #state{partition_index = PIndex,
+           State = #state{name = Name,
                           cb_module = CbModule,
                           cb_state = CbState}) ->
     lager:info("[veronica][worker ~p] Transferring to node: ~s",
-               [?VERONICA_WORKER(PIndex), Member]),
-    ok = CbModule:transfer(Member, CbState),
-    {stop, {shutdown, transfered}, State};
-handle_msg(Msg, State = #state{partition_index = PIndex}) ->
+               [Name, Member]),
+    {ok, Data} = CbModule:transfer(CbState),
+    ok = transfer_data({Name, Member}, Data),
+    ok = CbModule:finish_transfer(CbState),
+    {ok, State};
+handle_msg({receive_transfers, From, Ref, DataBin},
+           State = #state{name = Name,
+                          tranfers = Tranfers}) ->
+    lager:info("[veronica][worker ~p] Receiving transfer data",
+               [Name]),
+    Tranfers1 = <<Tranfers/binary, DataBin/binary>>,
+    From ! {ack, Ref},
+    {ok, State#state{tranfers = Tranfers1}};
+handle_msg({finish_transfer, From, Ref},
+           State = #state{name = Name,
+                          cb_module = CbModule,
+                          cb_state = CbState,
+                          tranfers = Tranfers}) ->
+    lager:info("[veronica][worker ~p] Finish transfer data",
+               [Name]),
+    Data = erlang:binary_to_term(Tranfers),
+    {ok, NewCbState} = CbModule:receive_transfers(Data, CbState),
+    From ! {ack, Ref},
+    {ok, State#state{cb_state = NewCbState,
+                     tranfers = <<>>}};
+handle_msg(Msg, State = #state{name = Name}) ->
     lager:warning("[veronica][worker ~p] Unknow msg ~p",
-                  [?VERONICA_WORKER(PIndex), Msg]),
+                  [Name, Msg]),
     {ok, State}.
 
-terminate({shutdown, transfered}, #state{partition_index = PIndex}) ->
+terminate({shutdown, transfered}, #state{name = Name}) ->
     lager:info("[veronica][worker ~p] transfered",
-               [?VERONICA_WORKER(PIndex)]),
+               [Name]),
     ok;
-terminate(Reason, #state{partition_index = PIndex,
+terminate(Reason, #state{name = Name,
                          cb_module = CbModule,
                          cb_state = CbState}) ->
     lager:error("[veronica][worker ~p] Terminate ~p",
-                [?VERONICA_WORKER(PIndex), Reason]),
+                [Name, Reason]),
     CbModule:terminate(Reason, CbState),
     ok.
 
@@ -96,3 +121,39 @@ terminate(Reason, #state{partition_index = PIndex,
 %%====================================================================
 %% Internal functions
 %%====================================================================
+
+transfer_data(RemoteName, Data) ->
+    DataBin = erlang:term_to_binary(Data),
+    ok = do_transfer_data(RemoteName, DataBin),
+    Ref = erlang:make_ref(),
+    RemoteName ! {finish_transfer, self(), Ref},
+    receive
+        {ack, Ref} ->
+            ok
+    after
+        5000 ->
+            timeout
+    end.
+
+do_transfer_data(RemoteName, DataBin) when
+      byte_size(DataBin) > 1024 ->
+    Ref = erlang:make_ref(),
+    <<D:1024/binary, T/binary>> = DataBin,
+    RemoteName ! {receive_transfers, self(), Ref, D},
+    receive
+        {ack, Ref} ->
+            do_transfer_data(RemoteName, T)
+    after
+        5000 ->
+            timeout
+    end;
+do_transfer_data(RemoteName, DataBin) ->
+    Ref = erlang:make_ref(),
+    RemoteName ! {receive_transfers, self(), Ref, DataBin},
+    receive
+        {ack, Ref} ->
+            ok
+    after
+        5000 ->
+            timeout
+    end.
