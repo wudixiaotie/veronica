@@ -4,14 +4,14 @@
 
 -export([start/0]).
 
--export([init/0, transfer/2, terminate/2]).
+-export([init/2, transfer/2, terminate/2]).
 
 start() ->
     application:start(veronica),
-    veronica:init_local_workers(?MODULE).
+    veronica:init_local_workers(?MODULE, []).
 
-init() ->
-    lager:info("[tv] init"),
+init(PIndex, _Args) ->
+    lager:info("[tv] init ~s", [PIndex]),
     {ok, []}.
 
 transfer(Member, _State) ->

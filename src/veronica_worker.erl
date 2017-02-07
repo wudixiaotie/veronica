@@ -34,7 +34,7 @@
 %% behaviour callbacks
 %% ===================================================================
 
--callback init(Args :: list()) ->
+-callback init(PIndex :: integer(), Args :: list()) ->
     {ok, State :: term()} |
     {stop, Reason :: term(), State :: term()}.
 -callback transfer(Member :: atom(), State :: term()) -> ok.
