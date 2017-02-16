@@ -43,7 +43,7 @@ build() ->
     Size = 64,
     Max = math:pow(2, 256),
     Interval = erlang:trunc(Max / Size),
-    Members = veronica_cluster:members(),
+    {ok, Members} = veronica_cluster:members(),
     Ring0 = #ring{size = Size,
                   interval = Interval,
                   members = Members},
@@ -51,25 +51,10 @@ build() ->
     {ok, Ring}.
 
 store(Ring = #ring{}) ->
-    RingBin = erlang:term_to_binary(Ring),
-    ok = ldb:set(<<"ring">>, RingBin),
-    true = ets:insert(ring, {ring, Ring}),
-    ok.
+    ldb:ets_set(ring, ring, Ring).
 
 get() ->
-    case ets:lookup(ring, ring) of
-        [{ring, Ring}] ->
-            {ok, Ring};
-        _ ->
-            case ldb:get(<<"ring">>) of
-                {ok, RingBin} ->
-                    Ring = erlang:binary_to_term(RingBin),
-                    true = ets:insert(ring, {ring, Ring}),
-                    {ok, Ring};
-                not_found ->
-                    not_found
-            end
-    end.
+    ldb:ets_get(ring, ring).
 
 interval(#ring{interval = Interval}) ->
     Interval.

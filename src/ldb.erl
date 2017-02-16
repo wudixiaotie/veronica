@@ -13,7 +13,9 @@
 -export([
          start_link/0,
          get/1,
-         set/2
+         set/2,
+         ets_get/2,
+         ets_set/3
         ]).
 
 %% gen_msg callbacks
@@ -52,6 +54,33 @@ set(Key, Value) when
         _ ->
             error
     end.
+
+ets_get(Table, Key) when
+      is_atom(Table),
+      is_atom(Key) ->
+    case ets:lookup(Table, Key) of
+        [{Key, Value}] ->
+            {ok, Value};
+        _ ->
+            KeyBin = erlang:atom_to_binary(Key, utf8),
+            case ?MODULE:get(KeyBin) of
+                {ok, ValueBin} ->
+                    Value = erlang:binary_to_term(ValueBin),
+                    true = ets:insert(Key, {Key, Value}),
+                    {ok, Value};
+                not_found ->
+                    not_found
+            end
+    end.
+
+ets_set(Table, Key, Value) when
+      is_atom(Table),
+      is_atom(Key) ->
+    KeyBin = erlang:atom_to_binary(Key, utf8),
+    ValueBin = erlang:term_to_binary(Value),
+    ok = ?MODULE:set(KeyBin, ValueBin),
+    true = ets:insert(Table, {Key, Value}),
+    ok.
 
 
 

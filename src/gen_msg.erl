@@ -134,8 +134,8 @@ system_terminate(Reason, _Parent, _Debug, [Module, State, _Timeout]) ->
     terminate(Reason, Module, State).
 
 
-system_get_state([State, _Module, _Timeout]) ->
-    {ok, State, State}.
+system_get_state([_Module, State, _Timeout]) ->
+    {ok, State}.
 
 
 system_replace_state(StateFun, State) ->

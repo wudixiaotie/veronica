@@ -13,7 +13,10 @@
 -export([
          start_link/0,
          join/1,
-         members/0
+         members/0,
+         add_member/1,
+         delete_member/1,
+         active_members/0
         ]).
 
 %% gen_msg callbacks
@@ -24,6 +27,8 @@
         ]).
 
 -include("veronica.hrl").
+
+-record(state, {refs = []}).
 
 
 
@@ -39,8 +44,13 @@ join(Node) ->
     send(rebalance).
 
 members() ->
-    Nodes = [erlang:node()|erlang:nodes()],
-    lists:sort(Nodes).
+    ldb:ets_get(cluster, members).
+
+add_member(Node) ->
+    ?MODULE ! {add_member, Node}.
+
+delete_member(Node) ->
+    ?MODULE ! {delete_member, Node}.
 
 
 
@@ -48,8 +58,32 @@ members() ->
 %% gen_msg callbacks
 %% ===================================================================
 
-init([]) -> {ok, []}.
+init([]) ->
+    ets:new(cluster, [set,
+                      public,
+                      named_table,
+                      {read_concurrency, true}]),
+    ldb:ets_set(cluster, members, [node()]),
+    State = #state{refs = {node(), erlang:make_ref()}},
+    {ok, State}.
 
+handle_msg({add_member, Node}, 
+           State = #state{refs = Refs}) ->
+    {ok, Members} = ?MODULE:members(),
+    Members1 = lists:sort([Node|Members]),
+    ldb:ets_set(cluster, members, Members1),
+
+    Ref = erlang:monitor(process, {?MODULE, Node}),
+    {ok, State#state{refs = [{Node, Ref}|Refs]}};
+handle_msg({delete_member, Node},
+           State = #state{refs = Refs}) ->
+    {ok, Members0} = ?MODULE:members(),
+    Members = lists:sort(lists:delete(Node, Members0)),
+    ldb:ets_set(cluster, members, Members),
+
+    {value, {_, Ref}, Refs1} = lists:keytake(Node, 1, Refs),
+    erlang:demonitor(Ref),
+    {ok, State#state{refs = Refs1}};
 handle_msg(rebalance, State) ->
     lager:info("[veronica][cluster] Rebalancing"),
     {ok, Ring} = ring:build(),
