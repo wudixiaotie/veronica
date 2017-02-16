@@ -1,9 +1,15 @@
 #!/bin/bash
-IP=$(ifconfig | grep --color=no -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep --color=no -Eo '([0-9]*\.){3}[0-9]*' | grep --color=no -v '127.0.0.1')
+IP=$(ifconfig | grep --color=no -Eo 'inet(\s.{2,4}):?([0-9]*\.){3}[0-9]*' | grep --color=no -Eo '([0-9]*\.){3}[0-9]*' | grep --color=no -v '127.0.0.1')
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-RANDOM_STRING=$(dd if=/dev/urandom bs=1 count=20 2>/dev/null | md5 | head -c 10)
+if [[ $(which md5) != "" ]]; then
+    MD5_CMD=md5
+elif [[ $(which md5sum) != "" ]]; then
+    MD5_CMD=md5sum
+fi
+
+RANDOM_STRING=$(dd if=/dev/urandom bs=1 count=20 2>/dev/null | $MD5_CMD | head -c 10)
 rebar3 compile
 
 NODE_NAME="veronica_${RANDOM_STRING}@${IP}"
