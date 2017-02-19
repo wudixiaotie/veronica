@@ -58,7 +58,7 @@ set(Key, Value) when
 ets_get(Table, Key) when
       is_atom(Table),
       is_atom(Key) ->
-    case ets:lookup(Table, Key) of
+    case catch ets:lookup(Table, Key) of
         [{Key, Value}] ->
             {ok, Value};
         _ ->

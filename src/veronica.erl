@@ -13,7 +13,9 @@
          get_worker/1,
          get_ring/0,
          local_partitions/1,
-         join_cluster/1
+         join_cluster/1,
+         members/0,
+         active_members/0
         ]).
 
 -include("veronica.hrl").
@@ -50,7 +52,13 @@ local_partitions(Ring) ->
     ring:local_partitions(Ring).
 
 join_cluster(Node) ->
-    veronica_cluster:join(Node).
+    veronica_cluster:add_member(Node).
+
+members() ->
+    veronica_cluster:members().
+
+active_members() ->
+    veronica_cluster:active_members().
 
 
 %%====================================================================

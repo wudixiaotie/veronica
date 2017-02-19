@@ -2,7 +2,7 @@
 
 -behaviour(veronica_worker).
 
--export([start/0, join/1, send/1]).
+-export([start/0, join/1, send/1, members/0, active_members/0]).
 
 -export([init/2, handle_msg/2, transfer/1, receive_transfers/2, finish_transfer/1, terminate/2]).
 
@@ -20,6 +20,12 @@ send(Msg) ->
 
 join(Node) ->
     veronica:join_cluster(Node).
+
+members() ->
+    veronica:members().
+
+active_members() ->
+    veronica:active_members().
 
 init(PIndex, _Args) ->
     Name = ?VERONICA_WORKER(PIndex),
